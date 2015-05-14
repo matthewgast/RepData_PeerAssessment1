@@ -5,9 +5,12 @@ output:
     keep_md: true
 ---
 
-## Environment
+## Environment Setup
+
+There are three packages that will be used in this document, so begin by loading them up.
 
 ```{r}
+library(dplyr)
 library(lubridate)
 library(ggplot2)
 ```
@@ -98,7 +101,9 @@ Once the data is summarized, this is a straightforward call to the
 
 ```{r}
 daily.mean <- mean(daily.steps$steps)
+daily.mean
 daily.median <- median(daily.steps$steps)
+daily.median
 ```
 
 ## What is the average daily activity pattern?
@@ -107,14 +112,13 @@ daily.median <- median(daily.steps$steps)
 
 The `aggregate` function can be used to apply the same function to a
 set of data.  In this case, we group the data by interval and apply
-the `mean` function to calculate the mean for every interval.
-
-TODO: plot the X-axis in this plot as a timestamp, not a string/integer.
+the `mean` function to calculate the mean for every interval.  A
+special-purpose axis label remap function is defined so that the time
+stamp strings are converted into a better human-readable format.
 
 ```{r}
 average.day <- aggregate(x=activity$steps, by=list(activity$interval), FUN=mean, na.rm=TRUE)
 names(average.day) <- c("interval","steps")
-average.day <- mutate(average.day,timeinterval=strftime(strptime(interval, format="%H%M")))
 
 convertToTimestamp <- function(t) {
 # Convert an integer timestamp (0500) into a text time ("05:00") for axis label purposes
@@ -191,18 +195,22 @@ of explicitly specifying `x` and `y` in the call.  This is slightly
 nicer because there is no need to rewrite the column names after the
 call to `aggregate`.  Finding the mean and median is as simple as a
 call to `mean` or `median` on the resulting data.  For comparison
-purposes, the mean and median are also printed in the code below.
+purposes, the mean and median are also printed in the code below.  Not
+surprisingly, the imputation process increases both the mean and
+median.
 
 ```{r}
 imputed.daily <- aggregate(steps ~ date, data=activity,FUN=sum)
 daily.imputed.mean <- mean(imputed.daily$steps)
-daily.mean
+c(daily.mean, daily.imputed.mean)
 daily.imputed.median <- median(imputed.daily$steps)
-daily.median
+c(daily.median, daily.imputed.median)
 ```
 
 The first thing to notice about the histogram is that the zero bin is
-much smaller.  The median and mean move so close together that the vertical lines showing the median and mean merge into a single line on the graph.
+much smaller.  The median and mean move so close together that the
+vertical lines showing the median and mean merge into a single line on
+the graph.
 
 ```{r}
 statname <- c("mean","median")
@@ -214,8 +222,7 @@ ggplot(imputed.daily,aes(steps)) +
        theme(legend.title=element_blank()) +
        xlab("Steps") +
        ylab("Frequency") +
-       ggtitle("Number of Daily Steps") +
-       scale_x_continuous(labels=convertToTimestamp)
+       ggtitle("Number of Daily Steps")
 ```
 
 
@@ -225,21 +232,32 @@ ggplot(imputed.daily,aes(steps)) +
 
 The factor was created as part of preprocessing as the `daytype` column in the data frame.
 
+```{r}
+head(activity.imputed)
+```
+
+
 2.  Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 
 Once again, the aggregate function can be used, but rather than by
 grouping solely on the interval, we also group on whether the day is a
-weekday or a weekend day.  To create a panel plot, the `facet_grid`
-layout element of `ggplot` is used.  Qualitatively, the morning peak
-on weekends is smaller, and activity throughout the day is more
-consistent.
-
-TODO: add trend lines
+weekday or a weekend day.  Therefore, the resulting data frame, named
+`tgif` because it is used in the study of weekend activity, can be
+used to plot two graphs in a panel.  The `facet_grid` option in
+`ggplot` draws two graphs, one with an average weekday and one with an
+average weekend.  To assist in visualization, the graphs have had
+smoothing lines added.  The smoothing lines show that weekend days
+tend to have more consistent activity throughout the day, even though
+the morning peak is smaller.
 
 ```{r}
 tgif <- aggregate(steps ~ interval+daytype, data=activity,FUN=mean)
 ggplot(tgif,aes(x=as.numeric(interval),y=steps,group=daytype)) +
        geom_line() +
        facet_grid(daytype ~ .) +
-       scale_x_continuous(labels=convertToTimestamp)
+       scale_x_continuous(labels=convertToTimestamp) +
+       stat_smooth() +
+       xlab("Time of Day") +
+       ylab("Number of Steps") +
+       ggtitle("Activity: Weekday Versus Weekend")
 ```
