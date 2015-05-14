@@ -1,14 +1,26 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 ## Environment
 
-```{r}
+
+```r
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following object is masked from 'package:stats':
+## 
+##     filter
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 library(lubridate)
 library(ggplot2)
 ```
@@ -18,7 +30,8 @@ library(ggplot2)
 Read the data.  Dates are often read in as factors unless you read
 them as something else, so we specify that it's a character.
 
-```{r}
+
+```r
 setwd("/Users/mgast/Dropbox/data-science-specialization/5-reproducible-research/RepData_PeerAssessment1")
 activity <- read.csv("activity.csv",colClasses=c("integer","character","integer"))
 activity$interval <- sprintf("%04d",activity$interval)
@@ -26,7 +39,8 @@ activity$interval <- sprintf("%04d",activity$interval)
 
 Then, we need to create timestamps.  strptime returns a `POSIXlt` data structure, which can't go into a data frame, so we convert it to a POSIXct with `strftime`.
 
-```{r}
+
+```r
 activity <- mutate(activity,datetime=strftime(strptime(paste(date,interval), format="%Y-%m-%d %H%M")))
 activity <- mutate(activity, dayofweek=weekdays(as.Date(activity$date)))
 activity$daytype[activity$dayofweek %in% c("Saturday","Sunday")] <- "weekend"
@@ -38,22 +52,48 @@ activity$daytype[activity$dayofweek %in% c("Saturday","Sunday")] <- "weekend"
 
 We can use the `aggregate` function to do this.  By default, aggregate ignores NA values.
 
-```{r}
+
+```r
 daily.steps <- aggregate(steps ~ date, data=activity,FUN=sum)
 head(daily.steps)
 ```
 
+```
+##         date steps
+## 1 2012-10-02   126
+## 2 2012-10-03 11352
+## 3 2012-10-04 12116
+## 4 2012-10-05 13294
+## 5 2012-10-06 15420
+## 6 2012-10-07 11015
+```
+
 2.  Make a histogram of the total number of steps taken each day
 
-```{r}
+
+```r
 ggplot(daily.steps,aes(steps)) + geom_histogram()
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
 3. Calculate and report the mean and median of the total number of steps taken per day
 
-```{r}
+
+```r
 mean(daily.steps$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(daily.steps$steps)
+```
+
+```
+## [1] 10765
 ```
 
 ## What is the average daily activity pattern?
@@ -64,23 +104,37 @@ Once again, the `aggregate` function removes NA values by default.
 
 TODO: plot the X-axis in this plot as a timestamp, not a string/integer.
 
-```{r}
+
+```r
 ada <- aggregate(steps ~ interval, data=activity,FUN=mean)
 ggplot(ada,aes(x=as.numeric(interval),y=steps)) + geom_line()
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
+
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r}
+
+```r
 ada[which.max(ada$steps),]
+```
+
+```
+##     interval    steps
+## 104     0835 206.1698
 ```
 
 ## Imputing missing values
 
 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
-```{r}
+
+```r
 sum(is.na(activity$steps))
+```
+
+```
+## [1] 2304
 ```
 
 2.  Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
@@ -105,7 +159,10 @@ The factor was created as part of preprocessing.
 
 Once again, the aggregate function can be used, but rather than by grouping solely on the interval, we also group on the type of date.
 
-```{r}
+
+```r
 ada2 <- aggregate(steps ~ interval+daytype, data=activity,FUN=mean)
 ggplot(ada2,aes(x=as.numeric(interval),y=steps,group=daytype)) + geom_line() + facet_grid(daytype ~ .)
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
