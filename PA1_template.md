@@ -145,9 +145,47 @@ The strategy is to replace an "NA" value with the average over the data set for 
 
 TODO - finish this!
 
+```r
+imputeSteps <- function (dataNA, timeslice) {
+   if (is.na(dataNA)) {
+      return(ada[ada$interval==timeslice,]$steps)
+   } else {
+      return(dataNA)
+   }
+}
+imputed.steps <- mapply(imputeSteps,activity$steps,activity$interval)
+activity.imputed <- activity
+activity.imputed$steps <- imputed.steps
+```
+
 4.  Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-TODO - finish this!
+
+```r
+imputed.daily <- aggregate(steps ~ date, data=activity,FUN=sum)
+ggplot(imputed.daily,aes(steps)) + geom_histogram()
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
+
+3. Calculate and report the mean and median of the total number of steps taken per day
+
+
+```r
+mean(imputed.daily$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
+median(imputed.daily$steps)
+```
+
+```
+## [1] 10765
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -165,4 +203,4 @@ ada2 <- aggregate(steps ~ interval+daytype, data=activity,FUN=mean)
 ggplot(ada2,aes(x=as.numeric(interval),y=steps,group=daytype)) + geom_line() + facet_grid(daytype ~ .)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-13-1.png) 

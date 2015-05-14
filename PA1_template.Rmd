@@ -90,10 +90,32 @@ The strategy is to replace an "NA" value with the average over the data set for 
 3.  Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
 TODO - finish this!
+```{r}
+imputeSteps <- function (dataNA, timeslice) {
+   if (is.na(dataNA)) {
+      return(ada[ada$interval==timeslice,]$steps)
+   } else {
+      return(dataNA)
+   }
+}
+imputed.steps <- mapply(imputeSteps,activity$steps,activity$interval)
+activity.imputed <- activity
+activity.imputed$steps <- imputed.steps
+```
 
 4.  Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-TODO - finish this!
+```{r}
+imputed.daily <- aggregate(steps ~ date, data=activity,FUN=sum)
+ggplot(imputed.daily,aes(steps)) + geom_histogram()
+```
+
+3. Calculate and report the mean and median of the total number of steps taken per day
+
+```{r}
+mean(imputed.daily$steps)
+median(imputed.daily$steps)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
